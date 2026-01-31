@@ -1,0 +1,116 @@
+package crypt
+
+import (
+	"bytes"
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
+	"flag"
+	"fmt"
+	"io"
+	"math"
+	"os"
+)
+
+func Crypt(){
+	key, decrypt, plaintext := input()
+	if *decrypt == true{
+		fmt.Println("key:")
+		fmt.Println(*key) 
+
+		decryptedText, err := aesDecrypt([]byte(*plaintext), *key)
+		if err != nil{
+			panic(err)
+		}
+		fmt.Println(decryptedText) 
+		fmt.Println("not yet implemented :3") 
+	}
+	encodedBytes, err := aesEncrypt(*plaintext, *key)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println("\nencodedBytes:")
+	fmt.Println(encodedBytes)
+	aesDecrypt(encodedBytes ,*key)
+	saveToFile(encodedBytes) 
+}
+
+func aesDecrypt(ciphertext, key []byte) ([]byte, error) {
+    block, err := aes.NewCipher(key)
+    if err != nil {
+        return nil, err
+    }
+
+    if len(ciphertext) < aes.BlockSize {
+        return nil, fmt.Errorf("ciphertext too short")
+    }
+
+    iv := ciphertext[:aes.BlockSize]
+    ciphertext = ciphertext[aes.BlockSize:]
+
+    mode := cipher.NewCBCDecrypter(block, iv)
+    mode.CryptBlocks(ciphertext, ciphertext)
+
+    // Unpad
+    padding := int(ciphertext[len(ciphertext)-1])
+    text := ciphertext[:len(ciphertext)-padding]
+    str := string(text[:])
+    fmt.Println(str)
+    return text, nil
+}
+
+
+
+func aesEncrypt(plaintext string , key []byte) ([]byte, error){
+	fmt.Printf("\n\nkey:\n%X", key) 
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		fmt.Println("error at ciper.BlockSize")
+		fmt.Println(err)
+		return nil, err
+	}
+	padding := aes.BlockSize - len(plaintext)%aes.BlockSize
+	paddingText := append([]byte(plaintext), bytes.Repeat([]byte{byte(padding)},padding)...)
+
+	cipherText := make([]byte, aes.BlockSize+len(paddingText))
+	iv := cipherText[:aes.BlockSize]
+	_, err = io.ReadFull(rand.Reader ,iv)
+	if err != nil {
+		return nil, err
+	}
+	mode := cipher.NewCBCEncrypter(block,iv)
+	mode.CryptBlocks(cipherText[aes.BlockSize:],paddingText)
+	fmt.Println("\nencrypted blocks:")
+	fmt.Println(cipherText)
+	return cipherText, err
+
+}
+
+func input() (*[]byte, *bool, *string) {
+	key := *flag.String("key","lorem ipsum" , "encryption key")
+	decrypt := flag.Bool("decrypt", false, "ask to decrypt")
+	fileLocation := flag.String("file", "", "file location")
+	flag.Parse()
+
+	if *fileLocation == ""{
+		fmt.Println("needs a fileLocation") 
+		os.Exit(1 )
+	}
+
+ 	text := readFromFile(*fileLocation) 
+	fmt.Printf("key: %s, bool: %t", key, *decrypt )
+	fmt.Print(text)
+	saltRunes := []rune("something super secret to make it long")
+	keyRunes := []rune(key)
+	// The key argument must be the AES key, either 16, 24, or 32 bytes
+	// stupid salting, worst case it is depending on architechture
+	var saltedBytes [32]byte
+	for i := 0; i < 32; i++{
+		sr := float64(saltRunes[i%len(saltRunes)])
+		kr := float64(keyRunes[i%len(keyRunes)])
+		saltedRune := byte(math.Sqrt(kr * sr))
+		saltedBytes[i] = saltedRune
+	}
+	sb := saltedBytes[:]
+	return &sb, decrypt, &text
+}
