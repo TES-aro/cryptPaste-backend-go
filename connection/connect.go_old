@@ -10,13 +10,13 @@ import (
 const maxSize int = 655360
 
 
-func fetchContent(ID string) string {
-	return "pass"
-
+func fetchContent(ID string) Paste {
+	json := Paste{"Some language", "lorem ipsum" }
+	return json
 }
 
 func saveContent(content Paste) string {
-	return "1234"
+	return "NewIDisNotThis"
 }
 
 type Paste struct {
@@ -31,7 +31,7 @@ func handleGET(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	ID := strings.TrimPrefix(req.URL.Path, "/api/")
-	if len(ID) != 32 {
+	if len(ID) != 8 {
 		w.WriteHeader(404)
 		return
 	}
