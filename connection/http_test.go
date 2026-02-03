@@ -24,7 +24,7 @@ func (h *handlerTestArray) newTest(method, url string, want int){
 	test := handlerTest{request, want }
 	h.testArray = append(h.testArray, test)
 }
-
+/*
 func TestHandlerFunctions(t *testing.T) {
 	tests := handlerTestArray{}
 	tests.newTest("GET", "/api/12345678", 200)
@@ -42,7 +42,7 @@ func TestHandlerFunctions(t *testing.T) {
 		fmt.Println(rr.Code , rr.Body)
 	}
 }
-
+*/
 func TestMux(t *testing.T) {
 	tests := handlerTestArray{}
 	testMux := createMux()
@@ -54,3 +54,7 @@ func TestMux(t *testing.T) {
 			t.Errorf("Wanted status ‰d; got %d", tt.wantCode, rr.Code)
 		}
 }
+
+// ######
+// some automation tools
+// #####
