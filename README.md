@@ -1,5 +1,6 @@
 ## cryptPaste backend
-backend for cryptPaste written in go.
+simple RESTful API for crypPaste writen in Go.
+It is written to work with postgress for now.
 ***no encryption is done by the backend***
 
 

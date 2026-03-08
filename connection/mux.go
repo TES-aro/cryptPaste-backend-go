@@ -2,12 +2,13 @@ package connection
 
 import(
 	"net/http"
+	"database/sql"
 )
 
 
-func createMux(postURL, getURL string) *http.ServeMux {
+func createMux(postURL, getURL string, sqlPointer *sql.DB) *http.ServeMux {
 	mux := http.NewServeMux()
-	mux.Handle(getURL, &GEThandler{getURL})
-	mux.Handle(postURL, &POSThandler{})
+	mux.Handle(getURL, &GEThandler{getURL, sqlPointer})
+	mux.Handle(postURL, &POSThandler{sqlPointer})
 	return mux
 }
