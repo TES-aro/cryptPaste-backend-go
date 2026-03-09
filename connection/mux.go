@@ -6,7 +6,7 @@ import(
 )
 
 
-func createMux(postURL, getURL string, sqlPointer *sql.DB) *http.ServeMux {
+func CreateMux(postURL, getURL string, sqlPointer *sql.DB) *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.Handle(getURL, &GEThandler{getURL, sqlPointer})
 	mux.Handle(postURL, &POSThandler{sqlPointer})

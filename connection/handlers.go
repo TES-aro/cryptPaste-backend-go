@@ -21,16 +21,20 @@ func pow10(exponent int) int {
 	return res
 }
 func genId() string {
-	id := 0
+	id := ""
 	for i:= 0; i<16; i++{
-		id = id + (rand.IntN(10) * pow10(i))
+		id = id + strconv.Itoa(rand.IntN(10))
 	}
-	return strconv.Itoa(id)
+	return id
 }
 
 
 func fetchContent(ID string, dbPointer *sql.DB) ([]byte, error) {
   content , err:= dataBase.FetchDB(ID, dbPointer)
+  if err != nil {
+	  fmt.Printf("error fetching entry: %s", err.Error())
+	  return nil, err
+  }
 
 	json , err := json.Marshal(JSONpaste{content.Language, content.Content })
 	if err != nil {
@@ -44,6 +48,7 @@ func saveContent(content JSONpaste, dbPointer *sql.DB) ([]byte, error) {
 	err := dataBase.PostDB(dbPointer, id, content.Language, content.Text)
 	json , err:= json.Marshal(JSONid{id})
 	if err != nil {
+		fmt.Println("error encoding JSON in POST handler")
 		return nil, err
 	}
 	return json, nil
@@ -71,17 +76,20 @@ func (h *GEThandler) ServeHTTP (w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	ID := strings.TrimPrefix(req.URL.Path, h.url)
+	ID = strings.TrimPrefix(ID, "/api/")
 	if len(ID) != 16 {
-		w.WriteHeader(404)
+		jsonError :=fmt.Sprintf("Error: ID %s has improper length of %d", ID, len(ID))
+		http.Error(w, jsonError, 404)
 		return
 	}
 	content , err:= fetchContent(ID, h.dbPointer)
 	if err != nil {
-		fmt.Println(err) 
+		http.Error(w, "Error: no matching content", 404)
+		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
-	w.Header().Add("Content-Type", "application/json")
-	fmt.Fprint(w, content)
+	w.Write(content)
 }
 
 
@@ -101,8 +109,6 @@ func (h *POSThandler) ServeHTTP (w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	contentLen := req.ContentLength
-	fmt.Print("content lenght: ")
-	fmt.Println(contentLen)
 	if contentLen > int64(maxSize) {
 		http.Error(w, "Error: content too large", 400)
 		return
@@ -120,7 +126,7 @@ func (h *POSThandler) ServeHTTP (w http.ResponseWriter, req *http.Request) {
 	}
 
 	if len(paste.Language) > 50 {
-		http.Error(w, "Error: misshapen JSON",  400)
+		http.Error(w, "Error: language too long",  400)
 		return
 	}
 
@@ -130,6 +136,6 @@ func (h *POSThandler) ServeHTTP (w http.ResponseWriter, req *http.Request) {
 	}
 
 	w.WriteHeader(200)
-	w.Header().Add("Content-Type", "text/plain")
-	fmt.Fprint(w, ID)
+	w.Header().Add("Content-Type", "application/json")
+	w.Write(ID)
 }

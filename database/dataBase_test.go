@@ -80,4 +80,3 @@ func TestDropTable(t *testing.T){
 		t.Error(err.Error())
 	}
 }
-
