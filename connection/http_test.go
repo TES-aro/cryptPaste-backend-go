@@ -13,6 +13,9 @@ import (
 
 // en tiedä miten tekisin nätimmin :/
 var workingID string
+var lang string = "go"
+var txt string = "fmt.Println(\"hello world\")"
+
 
 type handlerTest struct {
 	request *http.Request
@@ -71,6 +74,7 @@ func postBody(language, text, url string) *http.Request{
 	return req
 }
 
+// inits the db
 func TestInitDB(t *testing.T){
 	db, err := dataBase.ConnectToDB("cryptTest")
 	if err != nil {
@@ -79,6 +83,8 @@ func TestInitDB(t *testing.T){
 	}
 	dataBase.InitTable(db)
 }
+
+// testing starts
 func TestPostFunctions(t *testing.T){
 	db, err := dataBase.ConnectToDB("cryptTest")
 	if err != nil {
@@ -101,9 +107,8 @@ func TestPostFunctions(t *testing.T){
 		handler.ServeHTTP(rr, tt.request)
 	}
 
-	//erityistapaus, joka otetaan tateen
-
-	req := postBody("go","fmt.Println(\"hello world\")", "/api")
+	//erityistapaus, joka otetaan talteen
+	req := postBody(lang, txt, "/api")
 
 	record := httptest.NewRecorder()
 	handler := http.HandlerFunc(handlePOST)
@@ -115,8 +120,8 @@ func TestPostFunctions(t *testing.T){
 
 func TestHandlerFunctions(t *testing.T) {
 	tests := handlerTestArray{}
-	tests.newTest("GET", "/api/12345678", 404)
-	tests.newTest("GET","/api/1234", 404)
+	tests.newTest("GET", "/api/12345678", 400)
+	tests.newTest("GET","/api/1234", 400)
 	tests.newTest("POST", "/api/12345678", 405)
 	tests.newTest("PUT", "/api", 405)
 	tests.newTest("DELETE", "/api/1234567", 405)
@@ -154,6 +159,15 @@ func TestHandlerFunctions(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 	if rr.Code != 200 {
 		t.Error("improper code for fetching existing entry")
+	}
+	bytes := rr.Body.Bytes()
+	var body JSONpaste
+	err = json.Unmarshal(bytes, &body)
+	if err != nil {
+		fmt.Println("error parsing json from response")
+	}
+	if body.Language != lang || body.Text != txt {
+		t.Error("fetched content differs from sent")
 	}
 }
 
@@ -199,6 +213,7 @@ func decode(resp *bytes.Buffer) string {
 	err := json.Unmarshal(bytes, &jsonID)
 	if err != nil {
 		fmt.Println("error decoding buffer: " + err.Error())
+		return ""
 	}
 	fmt.Printf("decoded buffer to: %#v \n", jsonID)
 	return jsonID.ID

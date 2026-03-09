@@ -13,13 +13,6 @@ import (
 
 const maxSize int = 655360
 
-func pow10(exponent int) int {
-	res := 1
-	for i := 0; i < exponent; i++ {
-		res = res * 10
-	}
-	return res
-}
 func genId() string {
 	id := ""
 	for i:= 0; i<16; i++{
@@ -79,7 +72,7 @@ func (h *GEThandler) ServeHTTP (w http.ResponseWriter, req *http.Request) {
 	ID = strings.TrimPrefix(ID, "/api/")
 	if len(ID) != 16 {
 		jsonError :=fmt.Sprintf("Error: ID %s has improper length of %d", ID, len(ID))
-		http.Error(w, jsonError, 404)
+		http.Error(w, jsonError, 400)
 		return
 	}
 	content , err:= fetchContent(ID, h.dbPointer)
@@ -103,7 +96,6 @@ func (h *POSThandler) ServeHTTP (w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	typeHeader := req.Header.Get("Content-Type")
-	fmt.Println("header type: " + typeHeader)
 	if typeHeader != "application/json" {
 		http.Error(w,"Error: improper Content-Type header", 400)
 		return
@@ -133,6 +125,7 @@ func (h *POSThandler) ServeHTTP (w http.ResponseWriter, req *http.Request) {
 	ID , err:= saveContent(paste, h.dbPointer)
 	if err != nil {
 		fmt.Println(err)
+		http.Error(w, "internal error when saving entry", 500)
 	}
 
 	w.WriteHeader(200)

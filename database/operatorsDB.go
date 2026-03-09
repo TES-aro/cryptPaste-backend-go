@@ -3,7 +3,6 @@ package dataBase
 import (
 	"context"
 	"database/sql"
-	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -25,7 +24,7 @@ func FetchDB(id string, db *sql.DB) (Entry, error){
 	if err != nil {
 		return Entry{}, err
 	}
-	return Entry{language, content, time.Now() }, err
+	return Entry{language, content }, err
 }
 
 func bobbyDropTables(db *sql.DB) (sql.Result, error) {
